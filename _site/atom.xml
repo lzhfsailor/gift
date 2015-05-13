@@ -1,0 +1,1304 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Heming·Liang's blog]]></title>
+  <link href="/atom.xml" rel="self"/>
+  <link href="/"/>
+  <updated>2014-05-05T10:47:33+08:00</updated>
+  <id></id>
+  <author>
+    <name><![CDATA[Zhifeng·Liang]]></name>
+    <email><![CDATA[liangzhf@gmail.com]]></email>
+  </author>
+  <generator uri="http://www.worldhello.tk/">jekyll</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[粒子群优化算法（二）：实现]]></title>
+    <link href="/2014-05/particle-swarm-optimization-93/"/>
+    <updated>2014-05-01T19:21:21+08:00</updated>
+    <id>/2014-05/particle-swarm-optimization-93</id>
+    <content type="html"><![CDATA[<p>本文将用求解函数最大值的例子来实现粒子群算法</p>
+
+<h1>问题描述</h1>
+
+<hr />
+
+<ul>
+<li>求解y=-x*(x-2) 在[-2,2]上最大值</li>
+<li>采用Java语言编程实现</li>
+<li>代码同步到github上：<a href="https://github.com/lzhfsailor/EAs/tree/master/EAs/src/simplePSO" title="粒子群优化求函数最大值">粒子群优化求函数最大值</a></li>
+</ul>
+
+
+<h1>程序实现</h1>
+
+<hr />
+
+<p><input type=image  value=show&hide src="/images/hide.ico"  width ="20" height="20" onclick=display(codeHide)> 单击隐藏或显示代码</p>
+
+<div id=codeHide>
+
+<div class="highlight"><pre><code class="java"> <span class="kn">package</span> <span class="n">simplePSO</span><span class="o">;</span>
+ <span class="kn">import</span> <span class="nn">java.util.Random</span><span class="o">;</span>
+ <span class="cm">/**</span>
+<span class="cm">  * Copyright &amp;reg; 2014 Jinan</span>
+<span class="cm">  * </span>
+<span class="cm">  * @description v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 *</span>
+<span class="cm">  *              rand() * (gbest - present[i]);present[i] = present[i] + v[i]</span>
+<span class="cm">  * @author Heming.Liang</span>
+<span class="cm">  * @version 1.0 粒子群优化算法求解y=-x*(x-2) 在[-2,2]上最大值 All right reserved.</span>
+<span class="cm">  */</span>
+ <span class="kd">public</span> <span class="kd">class</span> <span class="nc">Maximum</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span> <span class="c1">// 粒子个数</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">y</span><span class="o">;</span><span class="c1">// 粒子位置</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">x</span><span class="o">;</span><span class="c1">// 粒子取值</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">v</span><span class="o">;</span><span class="c1">// 粒子更新速度</span>
+    <span class="kt">double</span> <span class="n">c1</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+    <span class="kt">double</span> <span class="n">c2</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+    <span class="kt">double</span> <span class="n">pbest</span><span class="o">[];</span><span class="c1">// 粒子历史最好位置</span>
+    <span class="kt">double</span> <span class="n">gbest</span><span class="o">;</span><span class="c1">// 全局最优位置</span>
+    <span class="kt">double</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">0.1</span><span class="o">;</span><span class="c1">// 设置速度最大值</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">fitnessFunction</span><span class="o">()</span> <span class="o">{</span><span class="c1">// 适应函数</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">*</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">-</span> <span class="mi">2</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">init</span><span class="o">()</span> <span class="o">{</span> <span class="c1">// 初始化</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">pbest</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="cm">/***</span>
+<span class="cm">        * Math.random()产生0-1之间类型为double的随机数</span>
+<span class="cm">        */</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">-</span> <span class="mi">2</span><span class="o">;</span>
+            <span class="n">v</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">vmax</span> <span class="o">?</span> <span class="n">vmax</span> <span class="o">:</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+        <span class="o">}</span>
+        <span class="n">fitnessFunction</span><span class="o">();</span>
+        <span class="c1">// 初始化当前个体极值，并找到群体极值</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">pbest</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">gbest</span><span class="o">)</span>
+                <span class="n">gbest</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+        <span class="o">}</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;start gbest:&quot;</span> <span class="o">+</span> <span class="n">gbest</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">PSO</span><span class="o">(</span><span class="kt">int</span> <span class="n">max</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">max</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="kt">double</span> <span class="n">w</span> <span class="o">=</span> <span class="mf">0.4</span><span class="o">;</span>
+            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">j</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="c1">// 更新位置和速度</span>
+                <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="o">(</span><span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">-</span> <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">])</span> <span class="o">+</span> <span class="n">c2</span>
+                        <span class="o">*</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="o">(</span><span class="n">gbest</span> <span class="o">-</span> <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]);</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">vmax</span><span class="o">)</span>
+                    <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">vmax</span><span class="o">;</span>
+                <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+=</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="c1">// 越界判断</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="o">)</span>
+                    <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">2</span><span class="o">)</span>
+                    <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span><span class="o">;</span>
+            <span class="o">}</span>
+            <span class="n">fitnessFunction</span><span class="o">();</span>
+            <span class="c1">// 更新个体极值和群体极值</span>
+            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">j</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">?</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">:</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">gbest</span><span class="o">)</span>
+                    <span class="n">gbest</span> <span class="o">=</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="s">&quot;  &quot;</span> <span class="o">+</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="s">&quot;  &quot;</span> <span class="o">+</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]);</span>
+            <span class="o">}</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;======generation &quot;</span> <span class="o">+</span> <span class="o">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="o">)</span> <span class="o">+</span> <span class="s">&quot;======gbest:&quot;</span>
+                    <span class="o">+</span> <span class="n">gbest</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Maximum</span> <span class="n">ts</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Maximum</span><span class="o">();</span>
+        <span class="n">ts</span><span class="o">.</span><span class="na">init</span><span class="o">();</span>
+        <span class="n">ts</span><span class="o">.</span><span class="na">PSO</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
+    <span class="o">}</span>
+ <span class="o">}</span>
+</code></pre></div>
+
+</div>
+
+
+<hr />
+
+<h1>结果分析</h1>
+
+<p>粒子群算法没有选择交叉变异等进化计算所具有的过程，所以实现起来比较容易，但很容易陷入局部最优。所以，<span class="strongFont">可以在粒子群算法中加入变异等方便跳出局部最优的方法，来得到更好的解</span>。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[粒子群优化算法（二）：实现]]></title>
+    <link href="/2014-05/particle-swarm-optimization-92/"/>
+    <updated>2014-05-01T19:21:21+08:00</updated>
+    <id>/2014-05/particle-swarm-optimization-92</id>
+    <content type="html"><![CDATA[<p>本文将用求解函数最大值的例子来实现粒子群算法</p>
+
+<h1>问题描述</h1>
+
+<hr />
+
+<ul>
+<li>求解y=-x*(x-2) 在[-2,2]上最大值</li>
+<li>采用Java语言编程实现</li>
+<li>代码同步到github上：<a href="https://github.com/lzhfsailor/EAs/tree/master/EAs/src/simplePSO" title="粒子群优化求函数最大值">粒子群优化求函数最大值</a></li>
+</ul>
+
+
+<h1>程序实现</h1>
+
+<hr />
+
+<p><input type=image  value=show&hide src="/images/hide.ico"  width ="20" height="20" onclick=display(codeHide)> 单击隐藏或显示代码</p>
+
+<div id=codeHide>
+
+<div class="highlight"><pre><code class="java"> <span class="kn">package</span> <span class="n">simplePSO</span><span class="o">;</span>
+ <span class="kn">import</span> <span class="nn">java.util.Random</span><span class="o">;</span>
+ <span class="cm">/**</span>
+<span class="cm">  * Copyright &amp;reg; 2014 Jinan</span>
+<span class="cm">  * </span>
+<span class="cm">  * @description v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 *</span>
+<span class="cm">  *              rand() * (gbest - present[i]);present[i] = present[i] + v[i]</span>
+<span class="cm">  * @author Heming.Liang</span>
+<span class="cm">  * @version 1.0 粒子群优化算法求解y=-x*(x-2) 在[-2,2]上最大值 All right reserved.</span>
+<span class="cm">  */</span>
+ <span class="kd">public</span> <span class="kd">class</span> <span class="nc">Maximum</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span> <span class="c1">// 粒子个数</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">y</span><span class="o">;</span><span class="c1">// 粒子位置</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">x</span><span class="o">;</span><span class="c1">// 粒子取值</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">v</span><span class="o">;</span><span class="c1">// 粒子更新速度</span>
+    <span class="kt">double</span> <span class="n">c1</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+    <span class="kt">double</span> <span class="n">c2</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+    <span class="kt">double</span> <span class="n">pbest</span><span class="o">[];</span><span class="c1">// 粒子历史最好位置</span>
+    <span class="kt">double</span> <span class="n">gbest</span><span class="o">;</span><span class="c1">// 全局最优位置</span>
+    <span class="kt">double</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">0.1</span><span class="o">;</span><span class="c1">// 设置速度最大值</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">fitnessFunction</span><span class="o">()</span> <span class="o">{</span><span class="c1">// 适应函数</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">*</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">-</span> <span class="mi">2</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">init</span><span class="o">()</span> <span class="o">{</span> <span class="c1">// 初始化</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">pbest</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="cm">/***</span>
+<span class="cm">        * Math.random()产生0-1之间类型为double的随机数</span>
+<span class="cm">        */</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">-</span> <span class="mi">2</span><span class="o">;</span>
+            <span class="n">v</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">vmax</span> <span class="o">?</span> <span class="n">vmax</span> <span class="o">:</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+        <span class="o">}</span>
+        <span class="n">fitnessFunction</span><span class="o">();</span>
+        <span class="c1">// 初始化当前个体极值，并找到群体极值</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">pbest</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">gbest</span><span class="o">)</span>
+                <span class="n">gbest</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+        <span class="o">}</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;start gbest:&quot;</span> <span class="o">+</span> <span class="n">gbest</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">PSO</span><span class="o">(</span><span class="kt">int</span> <span class="n">max</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">max</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="kt">double</span> <span class="n">w</span> <span class="o">=</span> <span class="mf">0.4</span><span class="o">;</span>
+            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">j</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="c1">// 更新位置和速度</span>
+                <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="o">(</span><span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">-</span> <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">])</span> <span class="o">+</span> <span class="n">c2</span>
+                        <span class="o">*</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="o">(</span><span class="n">gbest</span> <span class="o">-</span> <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]);</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">vmax</span><span class="o">)</span>
+                    <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">vmax</span><span class="o">;</span>
+                <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+=</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="c1">// 越界判断</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="o">)</span>
+                    <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">2</span><span class="o">)</span>
+                    <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span><span class="o">;</span>
+            <span class="o">}</span>
+            <span class="n">fitnessFunction</span><span class="o">();</span>
+            <span class="c1">// 更新个体极值和群体极值</span>
+            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">j</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">?</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">:</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">gbest</span><span class="o">)</span>
+                    <span class="n">gbest</span> <span class="o">=</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="s">&quot;  &quot;</span> <span class="o">+</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="s">&quot;  &quot;</span> <span class="o">+</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]);</span>
+            <span class="o">}</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;======generation &quot;</span> <span class="o">+</span> <span class="o">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="o">)</span> <span class="o">+</span> <span class="s">&quot;======gbest:&quot;</span>
+                    <span class="o">+</span> <span class="n">gbest</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Maximum</span> <span class="n">ts</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Maximum</span><span class="o">();</span>
+        <span class="n">ts</span><span class="o">.</span><span class="na">init</span><span class="o">();</span>
+        <span class="n">ts</span><span class="o">.</span><span class="na">PSO</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
+    <span class="o">}</span>
+ <span class="o">}</span>
+</code></pre></div>
+
+</div>
+
+
+<hr />
+
+<h1>结果分析</h1>
+
+<p>粒子群算法没有选择交叉变异等进化计算所具有的过程，所以实现起来比较容易，但很容易陷入局部最优。所以，<span class="strongFont">可以在粒子群算法中加入变异等方便跳出局部最优的方法，来得到更好的解</span>。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[粒子群优化算法（二）：实现]]></title>
+    <link href="/2014-05/particle-swarm-optimization-91/"/>
+    <updated>2014-05-01T19:21:21+08:00</updated>
+    <id>/2014-05/particle-swarm-optimization-91</id>
+    <content type="html"><![CDATA[<p>本文将用求解函数最大值的例子来实现粒子群算法</p>
+
+<h1>问题描述</h1>
+
+<hr />
+
+<ul>
+<li>求解y=-x*(x-2) 在[-2,2]上最大值</li>
+<li>采用Java语言编程实现</li>
+<li>代码同步到github上：<a href="https://github.com/lzhfsailor/EAs/tree/master/EAs/src/simplePSO" title="粒子群优化求函数最大值">粒子群优化求函数最大值</a></li>
+</ul>
+
+
+<h1>程序实现</h1>
+
+<hr />
+
+<p><input type=image  value=show&hide src="/images/hide.ico"  width ="20" height="20" onclick=display(codeHide)> 单击隐藏或显示代码</p>
+
+<div id=codeHide>
+
+<div class="highlight"><pre><code class="java"> <span class="kn">package</span> <span class="n">simplePSO</span><span class="o">;</span>
+ <span class="kn">import</span> <span class="nn">java.util.Random</span><span class="o">;</span>
+ <span class="cm">/**</span>
+<span class="cm">  * Copyright &amp;reg; 2014 Jinan</span>
+<span class="cm">  * </span>
+<span class="cm">  * @description v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 *</span>
+<span class="cm">  *              rand() * (gbest - present[i]);present[i] = present[i] + v[i]</span>
+<span class="cm">  * @author Heming.Liang</span>
+<span class="cm">  * @version 1.0 粒子群优化算法求解y=-x*(x-2) 在[-2,2]上最大值 All right reserved.</span>
+<span class="cm">  */</span>
+ <span class="kd">public</span> <span class="kd">class</span> <span class="nc">Maximum</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span> <span class="c1">// 粒子个数</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">y</span><span class="o">;</span><span class="c1">// 粒子位置</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">x</span><span class="o">;</span><span class="c1">// 粒子取值</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">v</span><span class="o">;</span><span class="c1">// 粒子更新速度</span>
+    <span class="kt">double</span> <span class="n">c1</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+    <span class="kt">double</span> <span class="n">c2</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+    <span class="kt">double</span> <span class="n">pbest</span><span class="o">[];</span><span class="c1">// 粒子历史最好位置</span>
+    <span class="kt">double</span> <span class="n">gbest</span><span class="o">;</span><span class="c1">// 全局最优位置</span>
+    <span class="kt">double</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">0.1</span><span class="o">;</span><span class="c1">// 设置速度最大值</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">fitnessFunction</span><span class="o">()</span> <span class="o">{</span><span class="c1">// 适应函数</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">*</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">-</span> <span class="mi">2</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">init</span><span class="o">()</span> <span class="o">{</span> <span class="c1">// 初始化</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">pbest</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="cm">/***</span>
+<span class="cm">        * Math.random()产生0-1之间类型为double的随机数</span>
+<span class="cm">        */</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">-</span> <span class="mi">2</span><span class="o">;</span>
+            <span class="n">v</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">vmax</span> <span class="o">?</span> <span class="n">vmax</span> <span class="o">:</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+        <span class="o">}</span>
+        <span class="n">fitnessFunction</span><span class="o">();</span>
+        <span class="c1">// 初始化当前个体极值，并找到群体极值</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">pbest</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">gbest</span><span class="o">)</span>
+                <span class="n">gbest</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+        <span class="o">}</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;start gbest:&quot;</span> <span class="o">+</span> <span class="n">gbest</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">PSO</span><span class="o">(</span><span class="kt">int</span> <span class="n">max</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">max</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="kt">double</span> <span class="n">w</span> <span class="o">=</span> <span class="mf">0.4</span><span class="o">;</span>
+            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">j</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="c1">// 更新位置和速度</span>
+                <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="o">(</span><span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">-</span> <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">])</span> <span class="o">+</span> <span class="n">c2</span>
+                        <span class="o">*</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="o">(</span><span class="n">gbest</span> <span class="o">-</span> <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]);</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">vmax</span><span class="o">)</span>
+                    <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">vmax</span><span class="o">;</span>
+                <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+=</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="c1">// 越界判断</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="o">)</span>
+                    <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">2</span><span class="o">)</span>
+                    <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span><span class="o">;</span>
+            <span class="o">}</span>
+            <span class="n">fitnessFunction</span><span class="o">();</span>
+            <span class="c1">// 更新个体极值和群体极值</span>
+            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">j</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">?</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">:</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">gbest</span><span class="o">)</span>
+                    <span class="n">gbest</span> <span class="o">=</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="s">&quot;  &quot;</span> <span class="o">+</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="s">&quot;  &quot;</span> <span class="o">+</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]);</span>
+            <span class="o">}</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;======generation &quot;</span> <span class="o">+</span> <span class="o">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="o">)</span> <span class="o">+</span> <span class="s">&quot;======gbest:&quot;</span>
+                    <span class="o">+</span> <span class="n">gbest</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Maximum</span> <span class="n">ts</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Maximum</span><span class="o">();</span>
+        <span class="n">ts</span><span class="o">.</span><span class="na">init</span><span class="o">();</span>
+        <span class="n">ts</span><span class="o">.</span><span class="na">PSO</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
+    <span class="o">}</span>
+ <span class="o">}</span>
+</code></pre></div>
+
+</div>
+
+
+<hr />
+
+<h1>结果分析</h1>
+
+<p>粒子群算法没有选择交叉变异等进化计算所具有的过程，所以实现起来比较容易，但很容易陷入局部最优。所以，<span class="strongFont">可以在粒子群算法中加入变异等方便跳出局部最优的方法，来得到更好的解</span>。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[粒子群优化算法（二）：实现]]></title>
+    <link href="/2014-05/particle-swarm-optimization-9/"/>
+    <updated>2014-05-01T19:21:21+08:00</updated>
+    <id>/2014-05/particle-swarm-optimization-9</id>
+    <content type="html"><![CDATA[<p>本文将用求解函数最大值的例子来实现粒子群算法</p>
+
+<h1>问题描述</h1>
+
+<hr />
+
+<ul>
+<li>求解y=-x*(x-2) 在[-2,2]上最大值</li>
+<li>采用Java语言编程实现</li>
+<li>代码同步到github上：<a href="https://github.com/lzhfsailor/EAs/tree/master/EAs/src/simplePSO" title="粒子群优化求函数最大值">粒子群优化求函数最大值</a></li>
+</ul>
+
+
+<h1>程序实现</h1>
+
+<hr />
+
+<p><input type=image  value=show&hide src="/images/hide.ico"  width ="20" height="20" onclick=display(codeHide)> 单击隐藏或显示代码</p>
+
+<div id=codeHide>
+
+<div class="highlight"><pre><code class="java"> <span class="kn">package</span> <span class="n">simplePSO</span><span class="o">;</span>
+ <span class="kn">import</span> <span class="nn">java.util.Random</span><span class="o">;</span>
+ <span class="cm">/**</span>
+<span class="cm">  * Copyright &amp;reg; 2014 Jinan</span>
+<span class="cm">  * </span>
+<span class="cm">  * @description v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 *</span>
+<span class="cm">  *              rand() * (gbest - present[i]);present[i] = present[i] + v[i]</span>
+<span class="cm">  * @author Heming.Liang</span>
+<span class="cm">  * @version 1.0 粒子群优化算法求解y=-x*(x-2) 在[-2,2]上最大值 All right reserved.</span>
+<span class="cm">  */</span>
+ <span class="kd">public</span> <span class="kd">class</span> <span class="nc">Maximum</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span> <span class="c1">// 粒子个数</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">y</span><span class="o">;</span><span class="c1">// 粒子位置</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">x</span><span class="o">;</span><span class="c1">// 粒子取值</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">v</span><span class="o">;</span><span class="c1">// 粒子更新速度</span>
+    <span class="kt">double</span> <span class="n">c1</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+    <span class="kt">double</span> <span class="n">c2</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+    <span class="kt">double</span> <span class="n">pbest</span><span class="o">[];</span><span class="c1">// 粒子历史最好位置</span>
+    <span class="kt">double</span> <span class="n">gbest</span><span class="o">;</span><span class="c1">// 全局最优位置</span>
+    <span class="kt">double</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">0.1</span><span class="o">;</span><span class="c1">// 设置速度最大值</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">fitnessFunction</span><span class="o">()</span> <span class="o">{</span><span class="c1">// 适应函数</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">*</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">-</span> <span class="mi">2</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">init</span><span class="o">()</span> <span class="o">{</span> <span class="c1">// 初始化</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">pbest</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="cm">/***</span>
+<span class="cm">        * Math.random()产生0-1之间类型为double的随机数</span>
+<span class="cm">        */</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">-</span> <span class="mi">2</span><span class="o">;</span>
+            <span class="n">v</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">vmax</span> <span class="o">?</span> <span class="n">vmax</span> <span class="o">:</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+        <span class="o">}</span>
+        <span class="n">fitnessFunction</span><span class="o">();</span>
+        <span class="c1">// 初始化当前个体极值，并找到群体极值</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">pbest</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">gbest</span><span class="o">)</span>
+                <span class="n">gbest</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+        <span class="o">}</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;start gbest:&quot;</span> <span class="o">+</span> <span class="n">gbest</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">PSO</span><span class="o">(</span><span class="kt">int</span> <span class="n">max</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">max</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="kt">double</span> <span class="n">w</span> <span class="o">=</span> <span class="mf">0.4</span><span class="o">;</span>
+            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">j</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="c1">// 更新位置和速度</span>
+                <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="o">(</span><span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">-</span> <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">])</span> <span class="o">+</span> <span class="n">c2</span>
+                        <span class="o">*</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="o">(</span><span class="n">gbest</span> <span class="o">-</span> <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]);</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">vmax</span><span class="o">)</span>
+                    <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">vmax</span><span class="o">;</span>
+                <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+=</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="c1">// 越界判断</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="o">)</span>
+                    <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">2</span><span class="o">)</span>
+                    <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span><span class="o">;</span>
+            <span class="o">}</span>
+            <span class="n">fitnessFunction</span><span class="o">();</span>
+            <span class="c1">// 更新个体极值和群体极值</span>
+            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">j</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">?</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">:</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">gbest</span><span class="o">)</span>
+                    <span class="n">gbest</span> <span class="o">=</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="s">&quot;  &quot;</span> <span class="o">+</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="s">&quot;  &quot;</span> <span class="o">+</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]);</span>
+            <span class="o">}</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;======generation &quot;</span> <span class="o">+</span> <span class="o">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="o">)</span> <span class="o">+</span> <span class="s">&quot;======gbest:&quot;</span>
+                    <span class="o">+</span> <span class="n">gbest</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Maximum</span> <span class="n">ts</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Maximum</span><span class="o">();</span>
+        <span class="n">ts</span><span class="o">.</span><span class="na">init</span><span class="o">();</span>
+        <span class="n">ts</span><span class="o">.</span><span class="na">PSO</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
+    <span class="o">}</span>
+ <span class="o">}</span>
+</code></pre></div>
+
+</div>
+
+
+<hr />
+
+<h1>结果分析</h1>
+
+<p>粒子群算法没有选择交叉变异等进化计算所具有的过程，所以实现起来比较容易，但很容易陷入局部最优。所以，<span class="strongFont">可以在粒子群算法中加入变异等方便跳出局部最优的方法，来得到更好的解</span>。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[粒子群优化算法（二）：实现]]></title>
+    <link href="/2014-05/particle-swarm-optimization-8/"/>
+    <updated>2014-05-01T19:21:21+08:00</updated>
+    <id>/2014-05/particle-swarm-optimization-8</id>
+    <content type="html"><![CDATA[<p>本文将用求解函数最大值的例子来实现粒子群算法</p>
+
+<h1>问题描述</h1>
+
+<hr />
+
+<ul>
+<li>求解y=-x*(x-2) 在[-2,2]上最大值</li>
+<li>采用Java语言编程实现</li>
+<li>代码同步到github上：<a href="https://github.com/lzhfsailor/EAs/tree/master/EAs/src/simplePSO" title="粒子群优化求函数最大值">粒子群优化求函数最大值</a></li>
+</ul>
+
+
+<h1>程序实现</h1>
+
+<hr />
+
+<p><input type=image  value=show&hide src="/images/hide.ico"  width ="20" height="20" onclick=display(codeHide)> 单击隐藏或显示代码</p>
+
+<div id=codeHide>
+
+<div class="highlight"><pre><code class="java"> <span class="kn">package</span> <span class="n">simplePSO</span><span class="o">;</span>
+ <span class="kn">import</span> <span class="nn">java.util.Random</span><span class="o">;</span>
+ <span class="cm">/**</span>
+<span class="cm">  * Copyright &amp;reg; 2014 Jinan</span>
+<span class="cm">  * </span>
+<span class="cm">  * @description v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 *</span>
+<span class="cm">  *              rand() * (gbest - present[i]);present[i] = present[i] + v[i]</span>
+<span class="cm">  * @author Heming.Liang</span>
+<span class="cm">  * @version 1.0 粒子群优化算法求解y=-x*(x-2) 在[-2,2]上最大值 All right reserved.</span>
+<span class="cm">  */</span>
+ <span class="kd">public</span> <span class="kd">class</span> <span class="nc">Maximum</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span> <span class="c1">// 粒子个数</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">y</span><span class="o">;</span><span class="c1">// 粒子位置</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">x</span><span class="o">;</span><span class="c1">// 粒子取值</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">v</span><span class="o">;</span><span class="c1">// 粒子更新速度</span>
+    <span class="kt">double</span> <span class="n">c1</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+    <span class="kt">double</span> <span class="n">c2</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+    <span class="kt">double</span> <span class="n">pbest</span><span class="o">[];</span><span class="c1">// 粒子历史最好位置</span>
+    <span class="kt">double</span> <span class="n">gbest</span><span class="o">;</span><span class="c1">// 全局最优位置</span>
+    <span class="kt">double</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">0.1</span><span class="o">;</span><span class="c1">// 设置速度最大值</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">fitnessFunction</span><span class="o">()</span> <span class="o">{</span><span class="c1">// 适应函数</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">*</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">-</span> <span class="mi">2</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">init</span><span class="o">()</span> <span class="o">{</span> <span class="c1">// 初始化</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">pbest</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="cm">/***</span>
+<span class="cm">        * Math.random()产生0-1之间类型为double的随机数</span>
+<span class="cm">        */</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">-</span> <span class="mi">2</span><span class="o">;</span>
+            <span class="n">v</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">vmax</span> <span class="o">?</span> <span class="n">vmax</span> <span class="o">:</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+        <span class="o">}</span>
+        <span class="n">fitnessFunction</span><span class="o">();</span>
+        <span class="c1">// 初始化当前个体极值，并找到群体极值</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">pbest</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">gbest</span><span class="o">)</span>
+                <span class="n">gbest</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+        <span class="o">}</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;start gbest:&quot;</span> <span class="o">+</span> <span class="n">gbest</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">PSO</span><span class="o">(</span><span class="kt">int</span> <span class="n">max</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">max</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="kt">double</span> <span class="n">w</span> <span class="o">=</span> <span class="mf">0.4</span><span class="o">;</span>
+            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">j</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="c1">// 更新位置和速度</span>
+                <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="o">(</span><span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">-</span> <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">])</span> <span class="o">+</span> <span class="n">c2</span>
+                        <span class="o">*</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="o">(</span><span class="n">gbest</span> <span class="o">-</span> <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]);</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">vmax</span><span class="o">)</span>
+                    <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">vmax</span><span class="o">;</span>
+                <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+=</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="c1">// 越界判断</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="o">)</span>
+                    <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">2</span><span class="o">)</span>
+                    <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span><span class="o">;</span>
+            <span class="o">}</span>
+            <span class="n">fitnessFunction</span><span class="o">();</span>
+            <span class="c1">// 更新个体极值和群体极值</span>
+            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">j</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">?</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">:</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">gbest</span><span class="o">)</span>
+                    <span class="n">gbest</span> <span class="o">=</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="s">&quot;  &quot;</span> <span class="o">+</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="s">&quot;  &quot;</span> <span class="o">+</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]);</span>
+            <span class="o">}</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;======generation &quot;</span> <span class="o">+</span> <span class="o">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="o">)</span> <span class="o">+</span> <span class="s">&quot;======gbest:&quot;</span>
+                    <span class="o">+</span> <span class="n">gbest</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Maximum</span> <span class="n">ts</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Maximum</span><span class="o">();</span>
+        <span class="n">ts</span><span class="o">.</span><span class="na">init</span><span class="o">();</span>
+        <span class="n">ts</span><span class="o">.</span><span class="na">PSO</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
+    <span class="o">}</span>
+ <span class="o">}</span>
+</code></pre></div>
+
+</div>
+
+
+<hr />
+
+<h1>结果分析</h1>
+
+<p>粒子群算法没有选择交叉变异等进化计算所具有的过程，所以实现起来比较容易，但很容易陷入局部最优。所以，<span class="strongFont">可以在粒子群算法中加入变异等方便跳出局部最优的方法，来得到更好的解</span>。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[粒子群优化算法（二）：实现]]></title>
+    <link href="/2014-05/particle-swarm-optimization-2/"/>
+    <updated>2014-05-01T19:21:21+08:00</updated>
+    <id>/2014-05/particle-swarm-optimization-2</id>
+    <content type="html"><![CDATA[<p>本文将用求解函数最大值的例子来实现粒子群算法</p>
+
+<h1>问题描述</h1>
+
+<hr />
+
+<ul>
+<li>求解y=-x*(x-2) 在[-2,2]上最大值</li>
+<li>采用Java语言编程实现</li>
+<li>代码同步到github上：<a href="https://github.com/lzhfsailor/EAs/tree/master/EAs/src/simplePSO" title="粒子群优化求函数最大值">粒子群优化求函数最大值</a></li>
+</ul>
+
+
+<h1>程序实现</h1>
+
+<hr />
+
+<p><input type=image  value=show&hide src="/images/hide.ico"  width ="20" height="20" onclick=display(codeHide)> 单击隐藏或显示代码</p>
+
+<div id=codeHide>
+
+<div class="highlight"><pre><code class="java"> <span class="kn">package</span> <span class="n">simplePSO</span><span class="o">;</span>
+ <span class="kn">import</span> <span class="nn">java.util.Random</span><span class="o">;</span>
+ <span class="cm">/**</span>
+<span class="cm">  * Copyright &amp;reg; 2014 Jinan</span>
+<span class="cm">  * </span>
+<span class="cm">  * @description v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 *</span>
+<span class="cm">  *              rand() * (gbest - present[i]);present[i] = present[i] + v[i]</span>
+<span class="cm">  * @author Heming.Liang</span>
+<span class="cm">  * @version 1.0 粒子群优化算法求解y=-x*(x-2) 在[-2,2]上最大值 All right reserved.</span>
+<span class="cm">  */</span>
+ <span class="kd">public</span> <span class="kd">class</span> <span class="nc">Maximum</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span> <span class="c1">// 粒子个数</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">y</span><span class="o">;</span><span class="c1">// 粒子位置</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">x</span><span class="o">;</span><span class="c1">// 粒子取值</span>
+    <span class="kt">double</span><span class="o">[]</span> <span class="n">v</span><span class="o">;</span><span class="c1">// 粒子更新速度</span>
+    <span class="kt">double</span> <span class="n">c1</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+    <span class="kt">double</span> <span class="n">c2</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+    <span class="kt">double</span> <span class="n">pbest</span><span class="o">[];</span><span class="c1">// 粒子历史最好位置</span>
+    <span class="kt">double</span> <span class="n">gbest</span><span class="o">;</span><span class="c1">// 全局最优位置</span>
+    <span class="kt">double</span> <span class="n">vmax</span> <span class="o">=</span> <span class="mf">0.1</span><span class="o">;</span><span class="c1">// 设置速度最大值</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">fitnessFunction</span><span class="o">()</span> <span class="o">{</span><span class="c1">// 适应函数</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">*</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">-</span> <span class="mi">2</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">init</span><span class="o">()</span> <span class="o">{</span> <span class="c1">// 初始化</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="n">pbest</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">double</span><span class="o">[</span><span class="n">n</span><span class="o">];</span>
+        <span class="cm">/***</span>
+<span class="cm">        * Math.random()产生0-1之间类型为double的随机数</span>
+<span class="cm">        */</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">-</span> <span class="mi">2</span><span class="o">;</span>
+            <span class="n">v</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">vmax</span> <span class="o">?</span> <span class="n">vmax</span> <span class="o">:</span> <span class="n">x</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+        <span class="o">}</span>
+        <span class="n">fitnessFunction</span><span class="o">();</span>
+        <span class="c1">// 初始化当前个体极值，并找到群体极值</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="n">pbest</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">gbest</span><span class="o">)</span>
+                <span class="n">gbest</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">i</span><span class="o">];</span>
+        <span class="o">}</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;start gbest:&quot;</span> <span class="o">+</span> <span class="n">gbest</span><span class="o">);</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">PSO</span><span class="o">(</span><span class="kt">int</span> <span class="n">max</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">max</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span> <span class="o">{</span>
+            <span class="kt">double</span> <span class="n">w</span> <span class="o">=</span> <span class="mf">0.4</span><span class="o">;</span>
+            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">j</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="c1">// 更新位置和速度</span>
+                <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="n">c1</span> <span class="o">*</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="o">(</span><span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">-</span> <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">])</span> <span class="o">+</span> <span class="n">c2</span>
+                        <span class="o">*</span> <span class="n">Math</span><span class="o">.</span><span class="na">random</span><span class="o">()</span> <span class="o">*</span> <span class="o">(</span><span class="n">gbest</span> <span class="o">-</span> <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]);</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">vmax</span><span class="o">)</span>
+                    <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">vmax</span><span class="o">;</span>
+                <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+=</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="c1">// 越界判断</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="o">)</span>
+                    <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">2</span><span class="o">)</span>
+                    <span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">2</span><span class="o">;</span>
+            <span class="o">}</span>
+            <span class="n">fitnessFunction</span><span class="o">();</span>
+            <span class="c1">// 更新个体极值和群体极值</span>
+            <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">;</span> <span class="n">j</span><span class="o">++)</span> <span class="o">{</span>
+                <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">=</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">?</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">:</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="k">if</span> <span class="o">(</span><span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">gbest</span><span class="o">)</span>
+                    <span class="n">gbest</span> <span class="o">=</span> <span class="n">pbest</span><span class="o">[</span><span class="n">j</span><span class="o">];</span>
+                <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">x</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="s">&quot;  &quot;</span> <span class="o">+</span> <span class="n">v</span><span class="o">[</span><span class="n">j</span><span class="o">]</span> <span class="o">+</span> <span class="s">&quot;  &quot;</span> <span class="o">+</span> <span class="n">y</span><span class="o">[</span><span class="n">j</span><span class="o">]);</span>
+            <span class="o">}</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;======generation &quot;</span> <span class="o">+</span> <span class="o">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="o">)</span> <span class="o">+</span> <span class="s">&quot;======gbest:&quot;</span>
+                    <span class="o">+</span> <span class="n">gbest</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">Maximum</span> <span class="n">ts</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Maximum</span><span class="o">();</span>
+        <span class="n">ts</span><span class="o">.</span><span class="na">init</span><span class="o">();</span>
+        <span class="n">ts</span><span class="o">.</span><span class="na">PSO</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
+    <span class="o">}</span>
+ <span class="o">}</span>
+</code></pre></div>
+
+</div>
+
+
+<hr />
+
+<h1>结果分析</h1>
+
+<p>粒子群算法没有选择交叉变异等进化计算所具有的过程，所以实现起来比较容易，但很容易陷入局部最优。所以，<span class="strongFont">可以在粒子群算法中加入变异等方便跳出局部最优的方法，来得到更好的解</span>。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[粒子群优化算法（一）：原理]]></title>
+    <link href="/2014-04/particle-swarm-optimization-7/"/>
+    <updated>2014-04-30T23:45:15+08:00</updated>
+    <id>/2014-04/particle-swarm-optimization-7</id>
+    <content type="html"><![CDATA[<h1>算法简介</h1>
+
+<hr />
+
+<p>PSO算法是群智能算法的一种，模拟一群鸟寻找食物的过程。每个鸟就是PSO中的一个粒子，也就是我们需要求解问题的可能解，这些鸟在寻找食物的过程中，不停改变自己在空中飞行的位置与速度。</p>
+
+<h1>算法描述</h1>
+
+<hr />
+
+<p>我们用pbest来记录个体搜索到的最优解，用gbest来记录整个群体在一次迭代中搜索到的最优解。速度和粒子位置的更新公式如下：</p>
+
+<blockquote><ul>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+<li>present[i] = present[i] + v[i]</li>
+</ul>
+</blockquote>
+
+<p>其中v[i]代表第i个粒子的速度，w代表惯性权值,c1和c2表示学习参数，rand()表示在0-1之间的随机数,pbest[i]代表第i个粒子搜索到的最优值,gbest代表整个种群搜索到的最优值,present[i]代表第i个粒子的当前位置。</p>
+
+<p>此外，微粒的速度V[i]被一个最大速度Vmax所限制。如果当前对微粒的加速导致它的在某维的速度vid超过该维的最大速度vmax,d，则该维的速度被限制为该维最大速度vmax,d。</p>
+
+<p>标准PSO的算法流程如下：<a href="http://zh.wikipedia.org/wiki/%E7%B2%92%E5%AD%90%E7%BE%A4%E4%BC%98%E5%8C%96" title="维基百科">来源于维基百科</a></p>
+
+<blockquote><ol>
+<li>初始化一群粒子（群体规模为m），包括随机的位置和速度；</li>
+<li>评价每个粒子的适应度；</li>
+<li>对每个粒子，将它的适应值和它经历过的最好位置pbest的作比较，如果较好，则将其作为当前的最好位置pbest；</li>
+<li>对每个粒子，将它的适应值和全局所经历最好位置gbest的作比较，如果较好，则重新设置gbest的索引号；</li>
+<li>根据方程v[i]及present[i]来变化粒子的速度和位置；</li>
+<li>如未达到结束条件（通常为足够好的适应值或达到一个预设最大代数Gmax），回到2）。</li>
+</ol>
+</blockquote>
+
+<hr />
+
+<h1>算法模型</h1>
+
+<hr />
+
+<p>对于公式v[i]，第一部分为粒子先前行为的惯性，第二部分为“认知（cognition）”部分，表示粒子本身的思考；第三部分为“社会（social）”部分，表示微粒间的信息共享与相互合作。</p>
+
+<ol>
+<li>认知模型
+
+<ul>
+<li>速度更新公式仅包含粒子群先前速度项（惯性）和粒子的认知部分，c2=0</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i])</li>
+</ul>
+</li>
+<li>社会模型
+
+<ul>
+<li>速度更新公式仅包含粒子群先前速度项（惯性）和粒子的社会部分,c1=0</li>
+<li>v[i] = w * v[i] + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+<li>完全模型
+
+<ul>
+<li>速度更新公式仅包含所有像，c1≠0,且c2≠0</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+<li>自私模型
+
+<ul>
+<li>速度更新公式中，群体最优选择时不包含粒子自身信息</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest' - present[i])</li>
+<li>其中gbest'=min{<em>f</em>(pbest[1]),<em>f</em>(pbest[2]),<em>f</em>(pbest[i-1]),<em>f</em>(pbest[i+1])……<em>f</em>(pbest[N])}</li>
+</ul>
+</li>
+<li>随机模型
+
+<ul>
+<li>速度更新公式中，不考虑粒子以前速度的影响（惯性），则粒子将会在搜索空间中随机移动，w=0</li>
+<li>v[i] =c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+</ol>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[粒子群优化算法（一）：原理]]></title>
+    <link href="/2014-04/particle-swarm-optimization-6/"/>
+    <updated>2014-04-30T23:45:15+08:00</updated>
+    <id>/2014-04/particle-swarm-optimization-6</id>
+    <content type="html"><![CDATA[<h1>算法简介</h1>
+
+<hr />
+
+<p>PSO算法是群智能算法的一种，模拟一群鸟寻找食物的过程。每个鸟就是PSO中的一个粒子，也就是我们需要求解问题的可能解，这些鸟在寻找食物的过程中，不停改变自己在空中飞行的位置与速度。</p>
+
+<h1>算法描述</h1>
+
+<hr />
+
+<p>我们用pbest来记录个体搜索到的最优解，用gbest来记录整个群体在一次迭代中搜索到的最优解。速度和粒子位置的更新公式如下：</p>
+
+<blockquote><ul>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+<li>present[i] = present[i] + v[i]</li>
+</ul>
+</blockquote>
+
+<p>其中v[i]代表第i个粒子的速度，w代表惯性权值,c1和c2表示学习参数，rand()表示在0-1之间的随机数,pbest[i]代表第i个粒子搜索到的最优值,gbest代表整个种群搜索到的最优值,present[i]代表第i个粒子的当前位置。</p>
+
+<p>此外，微粒的速度V[i]被一个最大速度Vmax所限制。如果当前对微粒的加速导致它的在某维的速度vid超过该维的最大速度vmax,d，则该维的速度被限制为该维最大速度vmax,d。</p>
+
+<p>标准PSO的算法流程如下：<a href="http://zh.wikipedia.org/wiki/%E7%B2%92%E5%AD%90%E7%BE%A4%E4%BC%98%E5%8C%96" title="维基百科">来源于维基百科</a></p>
+
+<blockquote><ol>
+<li>初始化一群粒子（群体规模为m），包括随机的位置和速度；</li>
+<li>评价每个粒子的适应度；</li>
+<li>对每个粒子，将它的适应值和它经历过的最好位置pbest的作比较，如果较好，则将其作为当前的最好位置pbest；</li>
+<li>对每个粒子，将它的适应值和全局所经历最好位置gbest的作比较，如果较好，则重新设置gbest的索引号；</li>
+<li>根据方程v[i]及present[i]来变化粒子的速度和位置；</li>
+<li>如未达到结束条件（通常为足够好的适应值或达到一个预设最大代数Gmax），回到2）。</li>
+</ol>
+</blockquote>
+
+<hr />
+
+<h1>算法模型</h1>
+
+<hr />
+
+<p>对于公式v[i]，第一部分为粒子先前行为的惯性，第二部分为“认知（cognition）”部分，表示粒子本身的思考；第三部分为“社会（social）”部分，表示微粒间的信息共享与相互合作。</p>
+
+<ol>
+<li>认知模型
+
+<ul>
+<li>速度更新公式仅包含粒子群先前速度项（惯性）和粒子的认知部分，c2=0</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i])</li>
+</ul>
+</li>
+<li>社会模型
+
+<ul>
+<li>速度更新公式仅包含粒子群先前速度项（惯性）和粒子的社会部分,c1=0</li>
+<li>v[i] = w * v[i] + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+<li>完全模型
+
+<ul>
+<li>速度更新公式仅包含所有像，c1≠0,且c2≠0</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+<li>自私模型
+
+<ul>
+<li>速度更新公式中，群体最优选择时不包含粒子自身信息</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest' - present[i])</li>
+<li>其中gbest'=min{<em>f</em>(pbest[1]),<em>f</em>(pbest[2]),<em>f</em>(pbest[i-1]),<em>f</em>(pbest[i+1])……<em>f</em>(pbest[N])}</li>
+</ul>
+</li>
+<li>随机模型
+
+<ul>
+<li>速度更新公式中，不考虑粒子以前速度的影响（惯性），则粒子将会在搜索空间中随机移动，w=0</li>
+<li>v[i] =c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+</ol>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[粒子群优化算法（一）：原理]]></title>
+    <link href="/2014-04/particle-swarm-optimization-5/"/>
+    <updated>2014-04-30T23:45:15+08:00</updated>
+    <id>/2014-04/particle-swarm-optimization-5</id>
+    <content type="html"><![CDATA[<h1>算法简介</h1>
+
+<hr />
+
+<p>PSO算法是群智能算法的一种，模拟一群鸟寻找食物的过程。每个鸟就是PSO中的一个粒子，也就是我们需要求解问题的可能解，这些鸟在寻找食物的过程中，不停改变自己在空中飞行的位置与速度。</p>
+
+<h1>算法描述</h1>
+
+<hr />
+
+<p>我们用pbest来记录个体搜索到的最优解，用gbest来记录整个群体在一次迭代中搜索到的最优解。速度和粒子位置的更新公式如下：</p>
+
+<blockquote><ul>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+<li>present[i] = present[i] + v[i]</li>
+</ul>
+</blockquote>
+
+<p>其中v[i]代表第i个粒子的速度，w代表惯性权值,c1和c2表示学习参数，rand()表示在0-1之间的随机数,pbest[i]代表第i个粒子搜索到的最优值,gbest代表整个种群搜索到的最优值,present[i]代表第i个粒子的当前位置。</p>
+
+<p>此外，微粒的速度V[i]被一个最大速度Vmax所限制。如果当前对微粒的加速导致它的在某维的速度vid超过该维的最大速度vmax,d，则该维的速度被限制为该维最大速度vmax,d。</p>
+
+<p>标准PSO的算法流程如下：<a href="http://zh.wikipedia.org/wiki/%E7%B2%92%E5%AD%90%E7%BE%A4%E4%BC%98%E5%8C%96" title="维基百科">来源于维基百科</a></p>
+
+<blockquote><ol>
+<li>初始化一群粒子（群体规模为m），包括随机的位置和速度；</li>
+<li>评价每个粒子的适应度；</li>
+<li>对每个粒子，将它的适应值和它经历过的最好位置pbest的作比较，如果较好，则将其作为当前的最好位置pbest；</li>
+<li>对每个粒子，将它的适应值和全局所经历最好位置gbest的作比较，如果较好，则重新设置gbest的索引号；</li>
+<li>根据方程v[i]及present[i]来变化粒子的速度和位置；</li>
+<li>如未达到结束条件（通常为足够好的适应值或达到一个预设最大代数Gmax），回到2）。</li>
+</ol>
+</blockquote>
+
+<hr />
+
+<h1>算法模型</h1>
+
+<hr />
+
+<p>对于公式v[i]，第一部分为粒子先前行为的惯性，第二部分为“认知（cognition）”部分，表示粒子本身的思考；第三部分为“社会（social）”部分，表示微粒间的信息共享与相互合作。</p>
+
+<ol>
+<li>认知模型
+
+<ul>
+<li>速度更新公式仅包含粒子群先前速度项（惯性）和粒子的认知部分，c2=0</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i])</li>
+</ul>
+</li>
+<li>社会模型
+
+<ul>
+<li>速度更新公式仅包含粒子群先前速度项（惯性）和粒子的社会部分,c1=0</li>
+<li>v[i] = w * v[i] + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+<li>完全模型
+
+<ul>
+<li>速度更新公式仅包含所有像，c1≠0,且c2≠0</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+<li>自私模型
+
+<ul>
+<li>速度更新公式中，群体最优选择时不包含粒子自身信息</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest' - present[i])</li>
+<li>其中gbest'=min{<em>f</em>(pbest[1]),<em>f</em>(pbest[2]),<em>f</em>(pbest[i-1]),<em>f</em>(pbest[i+1])……<em>f</em>(pbest[N])}</li>
+</ul>
+</li>
+<li>随机模型
+
+<ul>
+<li>速度更新公式中，不考虑粒子以前速度的影响（惯性），则粒子将会在搜索空间中随机移动，w=0</li>
+<li>v[i] =c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+</ol>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[粒子群优化算法（一）：原理]]></title>
+    <link href="/2014-04/particle-swarm-optimization-4/"/>
+    <updated>2014-04-30T23:45:15+08:00</updated>
+    <id>/2014-04/particle-swarm-optimization-4</id>
+    <content type="html"><![CDATA[<h1>算法简介</h1>
+
+<hr />
+
+<p>PSO算法是群智能算法的一种，模拟一群鸟寻找食物的过程。每个鸟就是PSO中的一个粒子，也就是我们需要求解问题的可能解，这些鸟在寻找食物的过程中，不停改变自己在空中飞行的位置与速度。</p>
+
+<h1>算法描述</h1>
+
+<hr />
+
+<p>我们用pbest来记录个体搜索到的最优解，用gbest来记录整个群体在一次迭代中搜索到的最优解。速度和粒子位置的更新公式如下：</p>
+
+<blockquote><ul>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+<li>present[i] = present[i] + v[i]</li>
+</ul>
+</blockquote>
+
+<p>其中v[i]代表第i个粒子的速度，w代表惯性权值,c1和c2表示学习参数，rand()表示在0-1之间的随机数,pbest[i]代表第i个粒子搜索到的最优值,gbest代表整个种群搜索到的最优值,present[i]代表第i个粒子的当前位置。</p>
+
+<p>此外，微粒的速度V[i]被一个最大速度Vmax所限制。如果当前对微粒的加速导致它的在某维的速度vid超过该维的最大速度vmax,d，则该维的速度被限制为该维最大速度vmax,d。</p>
+
+<p>标准PSO的算法流程如下：<a href="http://zh.wikipedia.org/wiki/%E7%B2%92%E5%AD%90%E7%BE%A4%E4%BC%98%E5%8C%96" title="维基百科">来源于维基百科</a></p>
+
+<blockquote><ol>
+<li>初始化一群粒子（群体规模为m），包括随机的位置和速度；</li>
+<li>评价每个粒子的适应度；</li>
+<li>对每个粒子，将它的适应值和它经历过的最好位置pbest的作比较，如果较好，则将其作为当前的最好位置pbest；</li>
+<li>对每个粒子，将它的适应值和全局所经历最好位置gbest的作比较，如果较好，则重新设置gbest的索引号；</li>
+<li>根据方程v[i]及present[i]来变化粒子的速度和位置；</li>
+<li>如未达到结束条件（通常为足够好的适应值或达到一个预设最大代数Gmax），回到2）。</li>
+</ol>
+</blockquote>
+
+<hr />
+
+<h1>算法模型</h1>
+
+<hr />
+
+<p>对于公式v[i]，第一部分为粒子先前行为的惯性，第二部分为“认知（cognition）”部分，表示粒子本身的思考；第三部分为“社会（social）”部分，表示微粒间的信息共享与相互合作。</p>
+
+<ol>
+<li>认知模型
+
+<ul>
+<li>速度更新公式仅包含粒子群先前速度项（惯性）和粒子的认知部分，c2=0</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i])</li>
+</ul>
+</li>
+<li>社会模型
+
+<ul>
+<li>速度更新公式仅包含粒子群先前速度项（惯性）和粒子的社会部分,c1=0</li>
+<li>v[i] = w * v[i] + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+<li>完全模型
+
+<ul>
+<li>速度更新公式仅包含所有像，c1≠0,且c2≠0</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+<li>自私模型
+
+<ul>
+<li>速度更新公式中，群体最优选择时不包含粒子自身信息</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest' - present[i])</li>
+<li>其中gbest'=min{<em>f</em>(pbest[1]),<em>f</em>(pbest[2]),<em>f</em>(pbest[i-1]),<em>f</em>(pbest[i+1])……<em>f</em>(pbest[N])}</li>
+</ul>
+</li>
+<li>随机模型
+
+<ul>
+<li>速度更新公式中，不考虑粒子以前速度的影响（惯性），则粒子将会在搜索空间中随机移动，w=0</li>
+<li>v[i] =c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+</ol>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[粒子群优化算法（一）：原理]]></title>
+    <link href="/2014-04/particle-swarm-optimization-3/"/>
+    <updated>2014-04-30T23:45:15+08:00</updated>
+    <id>/2014-04/particle-swarm-optimization-3</id>
+    <content type="html"><![CDATA[<h1>算法简介</h1>
+
+<hr />
+
+<p>PSO算法是群智能算法的一种，模拟一群鸟寻找食物的过程。每个鸟就是PSO中的一个粒子，也就是我们需要求解问题的可能解，这些鸟在寻找食物的过程中，不停改变自己在空中飞行的位置与速度。</p>
+
+<h1>算法描述</h1>
+
+<hr />
+
+<p>我们用pbest来记录个体搜索到的最优解，用gbest来记录整个群体在一次迭代中搜索到的最优解。速度和粒子位置的更新公式如下：</p>
+
+<blockquote><ul>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+<li>present[i] = present[i] + v[i]</li>
+</ul>
+</blockquote>
+
+<p>其中v[i]代表第i个粒子的速度，w代表惯性权值,c1和c2表示学习参数，rand()表示在0-1之间的随机数,pbest[i]代表第i个粒子搜索到的最优值,gbest代表整个种群搜索到的最优值,present[i]代表第i个粒子的当前位置。</p>
+
+<p>此外，微粒的速度V[i]被一个最大速度Vmax所限制。如果当前对微粒的加速导致它的在某维的速度vid超过该维的最大速度vmax,d，则该维的速度被限制为该维最大速度vmax,d。</p>
+
+<p>标准PSO的算法流程如下：<a href="http://zh.wikipedia.org/wiki/%E7%B2%92%E5%AD%90%E7%BE%A4%E4%BC%98%E5%8C%96" title="维基百科">来源于维基百科</a></p>
+
+<blockquote><ol>
+<li>初始化一群粒子（群体规模为m），包括随机的位置和速度；</li>
+<li>评价每个粒子的适应度；</li>
+<li>对每个粒子，将它的适应值和它经历过的最好位置pbest的作比较，如果较好，则将其作为当前的最好位置pbest；</li>
+<li>对每个粒子，将它的适应值和全局所经历最好位置gbest的作比较，如果较好，则重新设置gbest的索引号；</li>
+<li>根据方程v[i]及present[i]来变化粒子的速度和位置；</li>
+<li>如未达到结束条件（通常为足够好的适应值或达到一个预设最大代数Gmax），回到2）。</li>
+</ol>
+</blockquote>
+
+<hr />
+
+<h1>算法模型</h1>
+
+<hr />
+
+<p>对于公式v[i]，第一部分为粒子先前行为的惯性，第二部分为“认知（cognition）”部分，表示粒子本身的思考；第三部分为“社会（social）”部分，表示微粒间的信息共享与相互合作。</p>
+
+<ol>
+<li>认知模型
+
+<ul>
+<li>速度更新公式仅包含粒子群先前速度项（惯性）和粒子的认知部分，c2=0</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i])</li>
+</ul>
+</li>
+<li>社会模型
+
+<ul>
+<li>速度更新公式仅包含粒子群先前速度项（惯性）和粒子的社会部分,c1=0</li>
+<li>v[i] = w * v[i] + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+<li>完全模型
+
+<ul>
+<li>速度更新公式仅包含所有像，c1≠0,且c2≠0</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+<li>自私模型
+
+<ul>
+<li>速度更新公式中，群体最优选择时不包含粒子自身信息</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest' - present[i])</li>
+<li>其中gbest'=min{<em>f</em>(pbest[1]),<em>f</em>(pbest[2]),<em>f</em>(pbest[i-1]),<em>f</em>(pbest[i+1])……<em>f</em>(pbest[N])}</li>
+</ul>
+</li>
+<li>随机模型
+
+<ul>
+<li>速度更新公式中，不考虑粒子以前速度的影响（惯性），则粒子将会在搜索空间中随机移动，w=0</li>
+<li>v[i] =c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+</ol>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[粒子群优化算法（一）：原理]]></title>
+    <link href="/2014-04/particle-swarm-optimization-1/"/>
+    <updated>2014-04-30T23:45:15+08:00</updated>
+    <id>/2014-04/particle-swarm-optimization-1</id>
+    <content type="html"><![CDATA[<h1>算法简介</h1>
+
+<hr />
+
+<p>PSO算法是群智能算法的一种，模拟一群鸟寻找食物的过程。每个鸟就是PSO中的一个粒子，也就是我们需要求解问题的可能解，这些鸟在寻找食物的过程中，不停改变自己在空中飞行的位置与速度。</p>
+
+<h1>算法描述</h1>
+
+<hr />
+
+<p>我们用pbest来记录个体搜索到的最优解，用gbest来记录整个群体在一次迭代中搜索到的最优解。速度和粒子位置的更新公式如下：</p>
+
+<blockquote><ul>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+<li>present[i] = present[i] + v[i]</li>
+</ul>
+</blockquote>
+
+<p>其中v[i]代表第i个粒子的速度，w代表惯性权值,c1和c2表示学习参数，rand()表示在0-1之间的随机数,pbest[i]代表第i个粒子搜索到的最优值,gbest代表整个种群搜索到的最优值,present[i]代表第i个粒子的当前位置。</p>
+
+<p>此外，微粒的速度V[i]被一个最大速度Vmax所限制。如果当前对微粒的加速导致它的在某维的速度vid超过该维的最大速度vmax,d，则该维的速度被限制为该维最大速度vmax,d。</p>
+
+<p>标准PSO的算法流程如下：<a href="http://zh.wikipedia.org/wiki/%E7%B2%92%E5%AD%90%E7%BE%A4%E4%BC%98%E5%8C%96" title="维基百科">来源于维基百科</a></p>
+
+<blockquote><ol>
+<li>初始化一群粒子（群体规模为m），包括随机的位置和速度；</li>
+<li>评价每个粒子的适应度；</li>
+<li>对每个粒子，将它的适应值和它经历过的最好位置pbest的作比较，如果较好，则将其作为当前的最好位置pbest；</li>
+<li>对每个粒子，将它的适应值和全局所经历最好位置gbest的作比较，如果较好，则重新设置gbest的索引号；</li>
+<li>根据方程v[i]及present[i]来变化粒子的速度和位置；</li>
+<li>如未达到结束条件（通常为足够好的适应值或达到一个预设最大代数Gmax），回到2）。</li>
+</ol>
+</blockquote>
+
+<hr />
+
+<h1>算法模型</h1>
+
+<hr />
+
+<p>对于公式v[i]，第一部分为粒子先前行为的惯性，第二部分为“认知（cognition）”部分，表示粒子本身的思考；第三部分为“社会（social）”部分，表示微粒间的信息共享与相互合作。</p>
+
+<ol>
+<li>认知模型
+
+<ul>
+<li>速度更新公式仅包含粒子群先前速度项（惯性）和粒子的认知部分，c2=0</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i])</li>
+</ul>
+</li>
+<li>社会模型
+
+<ul>
+<li>速度更新公式仅包含粒子群先前速度项（惯性）和粒子的社会部分,c1=0</li>
+<li>v[i] = w * v[i] + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+<li>完全模型
+
+<ul>
+<li>速度更新公式仅包含所有像，c1≠0,且c2≠0</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+<li>自私模型
+
+<ul>
+<li>速度更新公式中，群体最优选择时不包含粒子自身信息</li>
+<li>v[i] = w * v[i] + c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest' - present[i])</li>
+<li>其中gbest'=min{<em>f</em>(pbest[1]),<em>f</em>(pbest[2]),<em>f</em>(pbest[i-1]),<em>f</em>(pbest[i+1])……<em>f</em>(pbest[N])}</li>
+</ul>
+</li>
+<li>随机模型
+
+<ul>
+<li>速度更新公式中，不考虑粒子以前速度的影响（惯性），则粒子将会在搜索空间中随机移动，w=0</li>
+<li>v[i] =c1 * rand() * (pbest[i] - present[i]) + c2 * rand() * (gbest - present[i])</li>
+</ul>
+</li>
+</ol>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Readme]]></title>
+    <link href="/2010-08/Just-For-Fun/"/>
+    <updated>2010-08-23T00:00:00+08:00</updated>
+    <id>/2010-08/Just-For-Fun</id>
+    <content type="html"><![CDATA[<h1>Readme</h1>
+
+<p class="meta">23 August 2010 - San Francisco</p>
+
+
+<p>I hear a lot of talk these days about TDD and BDD and Extreme Programming and SCRUM and stand up meetings and all kinds of methodologies and techniques for developing better software, but it's all irrelevant unless the software we're building meets the needs of those that are using it. Let me put that another way. A perfect implementation of the wrong specification is worthless. By the same principle a beautifully crafted library with no documentation is also damn near worthless. If your software solves the wrong problem or nobody can figure out how to use it, there's something very bad going on.</p>
+
+<p>Fine. So how do we solve this problem? It's easier than you think, and it's important enough to warrant its very own paragraph.</p>
+
+<p>Write your Readme first.</p>
+
+<p>First. As in, before you write any code or tests or behaviors or stories or ANYTHING. I know, I know, we're programmers, dammit, not tech writers! But that's where you're wrong. Writing a Readme is absolutely essential to writing good software. Until you've written about your software, you have no idea what you'll be coding. Between The Great Backlash Against Waterfall Design and The Supreme Acceptance of Agile Development, something was lost. Don't get me wrong, waterfall design takes things way too far. Huge systems specified in minute detail end up being the WRONG systems specified in minute detail. We were right to strike it down. But what took its place is too far in the other direction. Now we have projects with short, badly written, or entirely missing documentation. Some projects don't even have a Readme!</p>
+
+<p>This is not acceptable. There must be some middle ground between reams of technical specifications and no specifications at all. And in fact there is. That middle ground is the humble Readme.</p>
+
+<p>It's important to distinguish Readme Driven Development from Documentation Driven Development. RDD could be considered a subset or limited version of DDD. By restricting your design documentation to a single file that is intended to be read as an introduction to your software, RDD keeps you safe from DDD-turned-waterfall syndrome by punishing you for lengthy or overprecise specification. At the same time, it rewards you for keeping libraries small and modularized. These simple reinforcements go a long way towards driving your project in the right direction without a lot of process to ensure you do the right thing.</p>
+
+<p>By writing your Readme first you give yourself some pretty significant advantages:</p>
+
+<ul>
+<li><p>Most importantly, you're giving yourself a chance to think through the project without the overhead of having to change code every time you change your mind about how something should be organized or what should be included in the Public API. Remember that feeling when you first started writing automated code tests and realized that you caught all kinds of errors that would have otherwise snuck into your codebase? That's the exact same feeling you'll have if you write the Readme for your project before you write the actual code.</p></li>
+<li><p>As a byproduct of writing a Readme in order to know what you need to implement, you'll have a very nice piece of documentation sitting in front of you. You'll also find that it's much easier to write this document at the beginning of the project when your excitement and motivation are at their highest. Retroactively writing a Readme is an absolute drag, and you're sure to miss all kinds of important details when you do so.</p></li>
+<li><p>If you're working with a team of developers you get even more mileage out of your Readme. If everyone else on the team has access to this information before you've completed the project, then they can confidently start work on other projects that will interface with your code. Without any sort of defined interface, you have to code in serial or face reimplementing large portions of code.</p></li>
+<li><p>It's a lot simpler to have a discussion based on something written down. It's easy to talk endlessly and in circles about a problem if nothing is ever put to text. The simple act of writing down a proposed solution means everyone has a concrete idea that can be argued about and iterated upon.</p></li>
+</ul>
+
+
+<p>Consider the process of writing the Readme for your project as the true act of creation. This is where all your brilliant ideas should be expressed. This document should stand on its own as a testament to your creativity and expressiveness. The Readme should be the single most important document in your codebase; writing it first is the proper thing to do.</p>
+
+<p>--</p>
+
+<p><a href="http://news.ycombinator.com/item?id=1627246">Discuss this post on Hacker News</a></p>
+]]></content>
+  </entry>
+  
+</feed>

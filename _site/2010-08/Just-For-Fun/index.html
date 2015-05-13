@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="zh-CN">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Readme - Heming·Liang's blog</title>
+		<meta name="description" content="Heming 的个人博客" />
+		<meta name="keywords" content="Hemin" />
+		<meta name="author" content="Hemin" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="profile" href="http://gmpg.org/xfn/11" />
+		<link rel="stylesheet" type="text/css" media="all" href="/static/css/style.css" />
+		<link rel="stylesheet" type="text/css" media="all" href="/static/css/highlight.css" />
+		<script src="/static/js/jquery.js" type="text/javascript"></script>
+		<!--[if lt IE 9]>
+		<script src="/static/js/html5.js" type="text/javascript"></script>
+		<![endif]-->
+		<meta name="generator" content="jekyll" />
+	</head>
+	<body itemscope itemtype="http://schema.org/WebPage" class="home blog lost index">
+		<section class="lost-logo fn-clear">
+		<span class="alignleft">
+  			<img class="violet-logo" src="/static/images/logo_musicdog.jpg"/>
+			<hgroup class="violet-site">	
+        		<h1><a href="/" ret="bootmark">worldhello</a><span>.tk</span></h1>
+        		<h2>Life was like a box of chocolates. </h2>
+     		</hgroup><!-- //violet-site -->	
+		</span>
+		<span class="alignright">
+  			<span><a href="/" title="首页" ret="bootmark"><i class="icon-home"></i>首页</a></span>
+  			<span><a href="/archives.html" ret="bootmark">归档</a></span>
+  			<span><a href="/categories.html" ret="bootmark">分类</a></span>
+  			<span><a href="/tags.html" ret="bootmark">标签</a></span>
+			<span><a href="/wiki" ret="bootmark">Wiki</a></span>
+  			<span><a href="/about.html" ret="bootmark">关于</a></span>
+			
+		</span>
+		</section>
+
+		<h1 class="lost-pagetit">Readme</h1>
+
+<article itemscope itemtype="http://schema.org/Article" class="lost-post">
+<h1>Readme</h1>
+
+<p class="meta">23 August 2010 - San Francisco</p>
+
+
+<p>I hear a lot of talk these days about TDD and BDD and Extreme Programming and SCRUM and stand up meetings and all kinds of methodologies and techniques for developing better software, but it's all irrelevant unless the software we're building meets the needs of those that are using it. Let me put that another way. A perfect implementation of the wrong specification is worthless. By the same principle a beautifully crafted library with no documentation is also damn near worthless. If your software solves the wrong problem or nobody can figure out how to use it, there's something very bad going on.</p>
+
+<p>Fine. So how do we solve this problem? It's easier than you think, and it's important enough to warrant its very own paragraph.</p>
+
+<p>Write your Readme first.</p>
+
+<p>First. As in, before you write any code or tests or behaviors or stories or ANYTHING. I know, I know, we're programmers, dammit, not tech writers! But that's where you're wrong. Writing a Readme is absolutely essential to writing good software. Until you've written about your software, you have no idea what you'll be coding. Between The Great Backlash Against Waterfall Design and The Supreme Acceptance of Agile Development, something was lost. Don't get me wrong, waterfall design takes things way too far. Huge systems specified in minute detail end up being the WRONG systems specified in minute detail. We were right to strike it down. But what took its place is too far in the other direction. Now we have projects with short, badly written, or entirely missing documentation. Some projects don't even have a Readme!</p>
+
+<p>This is not acceptable. There must be some middle ground between reams of technical specifications and no specifications at all. And in fact there is. That middle ground is the humble Readme.</p>
+
+<p>It's important to distinguish Readme Driven Development from Documentation Driven Development. RDD could be considered a subset or limited version of DDD. By restricting your design documentation to a single file that is intended to be read as an introduction to your software, RDD keeps you safe from DDD-turned-waterfall syndrome by punishing you for lengthy or overprecise specification. At the same time, it rewards you for keeping libraries small and modularized. These simple reinforcements go a long way towards driving your project in the right direction without a lot of process to ensure you do the right thing.</p>
+
+<p>By writing your Readme first you give yourself some pretty significant advantages:</p>
+
+<ul>
+<li><p>Most importantly, you're giving yourself a chance to think through the project without the overhead of having to change code every time you change your mind about how something should be organized or what should be included in the Public API. Remember that feeling when you first started writing automated code tests and realized that you caught all kinds of errors that would have otherwise snuck into your codebase? That's the exact same feeling you'll have if you write the Readme for your project before you write the actual code.</p></li>
+<li><p>As a byproduct of writing a Readme in order to know what you need to implement, you'll have a very nice piece of documentation sitting in front of you. You'll also find that it's much easier to write this document at the beginning of the project when your excitement and motivation are at their highest. Retroactively writing a Readme is an absolute drag, and you're sure to miss all kinds of important details when you do so.</p></li>
+<li><p>If you're working with a team of developers you get even more mileage out of your Readme. If everyone else on the team has access to this information before you've completed the project, then they can confidently start work on other projects that will interface with your code. Without any sort of defined interface, you have to code in serial or face reimplementing large portions of code.</p></li>
+<li><p>It's a lot simpler to have a discussion based on something written down. It's easy to talk endlessly and in circles about a problem if nothing is ever put to text. The simple act of writing down a proposed solution means everyone has a concrete idea that can be argued about and iterated upon.</p></li>
+</ul>
+
+
+<p>Consider the process of writing the Readme for your project as the true act of creation. This is where all your brilliant ideas should be expressed. This document should stand on its own as a testament to your creativity and expressiveness. The Readme should be the single most important document in your codebase; writing it first is the proper thing to do.</p>
+
+<p>--</p>
+
+<p><a href="http://news.ycombinator.com/item?id=1627246">Discuss this post on Hacker News</a></p>
+
+</article>
+<p class="lost-pagebtn">
+<i class="icon-calendar"></i>August 23,2010 &nbsp;
+<i class="icon-cogs"></i>
+
+&nbsp;&nbsp;
+<i class="icon-tags"></i>
+
+<p class="lost-anno">
+  声明: 本文采用 
+  <a href="http://creativecommons.org/licenses/by-nc-sa/3.0/" rel="nofollow" target="_blank" title="自由转载-非商用-非衍生-保持署名">BY-NC-SA</a> 
+  授权。转载请注明转自: 
+  <a href="/2010-08/Just-For-Fun/" title="Readme" rel="nofollow">Heming</a>
+</p>
+<section class="fn-clear">
+  <h2>Related Posts:</h2>
+  <ul>
+  
+      <li class="related">
+        <time datetime="2014-05-01T19:21:21+08:00">May  1,2014</time>
+        ---
+        <a href="/2014-05/particle-swarm-optimization-93/">粒子群优化算法（二）：实现</a>
+      </li>
+  
+      <li class="related">
+        <time datetime="2014-05-01T19:21:21+08:00">May  1,2014</time>
+        ---
+        <a href="/2014-05/particle-swarm-optimization-92/">粒子群优化算法（二）：实现</a>
+      </li>
+  
+      <li class="related">
+        <time datetime="2014-05-01T19:21:21+08:00">May  1,2014</time>
+        ---
+        <a href="/2014-05/particle-swarm-optimization-91/">粒子群优化算法（二）：实现</a>
+      </li>
+  
+      <li class="related">
+        <time datetime="2014-05-01T19:21:21+08:00">May  1,2014</time>
+        ---
+        <a href="/2014-05/particle-swarm-optimization-9/">粒子群优化算法（二）：实现</a>
+      </li>
+  
+  </ul>
+</section>
+
+<section class="lost-nextpage fn-clear">
+      
+      
+      <div class="lost-nextpage-right"> <i class="icon-circle-arrow-right"></i><a href="/2014-04/particle-swarm-optimization-1/" rel="next" title="粒子群优化算法（一）：原理">后一篇：粒子群优化算法（一）：原理</a></div>
+      
+</section>
+<hr/>
+<section class="lost-disqus fn-clear" itemscope itemtype="http://schema.org/Comment">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+     var disqus_shortname = 'shawhu'; 
+     (function() {
+         var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+         dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+     })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</section>
+
+
+
+
+
+		<footer class="lost-footer">
+		<div>
+    		<hr/>
+    		<span class="alignleft">
+       		<a href="/" title="Heming·Liang's blog"><i class="icon-home"></i>首页</a> &brvbar; 
+      	 	<a href="/atom.xml"><i class="icon-rss"></i>RSS 订阅</a> &brvbar; 
+    		</span>
+    		<span class="alignright">Copyright &copy <a href="/about.html">Heming·Liang </a>| Powered by <a href="https://github.com/mojombo/jekyll">Jekyll </span>
+		</div>
+		</footer>
+		<script src="/static/js/jquery.scrollTo.js" type="text/javascript"></script>
+		<script src="/static/js/Lost.js" type="text/javascript"></script>
+		<script type="text/javascript">
+	var _gaq = _gaq || [];
+	_gaq.push(['_setAccount', 'UA-34850864-1']);
+	_gaq.push(['_trackPageview']);
+	(function() {
+		 var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		 ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		 var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	 })();
+</script>
+
+		<a href="http://github.com/lzhfsailor"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub" /></a>
+	</body>
+</html>
